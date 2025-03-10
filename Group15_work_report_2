@@ -1,0 +1,113 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Tanishasingh22/AD_lab/blob/main/Group15_work_report_2\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "from sklearn.model_selection import train_test_split, GridSearchCV\n",
+        "from sklearn.ensemble import RandomForestRegressor\n",
+        "from sklearn.preprocessing import StandardScaler\n",
+        "from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, precision_score, f1_score\n",
+        "\n",
+        "# Load dataset (Modify path accordingly)\n",
+        "data = pd.read_csv(\"prices.csv\")  # Ensure dataset is in CSV format\n",
+        "\n",
+        "# Preprocessing\n",
+        "data = data.dropna()  # Remove missing values\n",
+        "\n",
+        "# Feature selection (Modify based on dataset structure)\n",
+        "X = data.drop(columns=[\"close\", \"date\", \"symbol\"])  # Assuming 'Close' is the target variable\n",
+        "y = data[\"close\"]\n",
+        "\n",
+        "# Train-test split\n",
+        "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n",
+        "\n",
+        "# Feature scaling\n",
+        "scaler = StandardScaler()\n",
+        "X_train = scaler.fit_transform(X_train)\n",
+        "X_test = scaler.transform(X_test)\n",
+        "\n",
+        "# Hyperparameter tuning with GridSearchCV\n",
+        "param_grid = {\n",
+        "    'n_estimators': [50, 100, 200],\n",
+        "    'max_depth': [10, 20, None],\n",
+        "    'min_samples_split': [2, 5, 10],\n",
+        "    'min_samples_leaf': [1, 2, 4]\n",
+        "}\n",
+        "\n",
+        "rf = RandomForestRegressor(random_state=42)\n",
+        "grid_search = GridSearchCV(rf, param_grid, cv=3, scoring='r2', n_jobs=-1)\n",
+        "grid_search.fit(X_train, y_train)\n",
+        "\n",
+        "# Best model\n",
+        "tuned_model = grid_search.best_estimator_\n",
+        "y_pred = tuned_model.predict(X_test)\n",
+        "\n",
+        "# Regression evaluation\n",
+        "r2 = r2_score(y_test, y_pred)\n",
+        "mae = mean_absolute_error(y_test, y_pred)\n",
+        "rmse = np.sqrt(mean_squared_error(y_test, y_pred))\n",
+        "\n",
+        "print(f\"R² Score: {r2}\")\n",
+        "print(f\"Mean Absolute Error (MAE): {mae}\")\n",
+        "print(f\"Root Mean Squared Error (RMSE): {rmse}\")\n",
+        "\n",
+        "# Convert to classification: Stock price up (1) or down (0)\n",
+        "y_test_class = np.where(y_test.diff().fillna(0) > 0, 1, 0)\n",
+        "y_pred_class = np.where(np.diff(y_pred, prepend=y_pred[0]) > 0, 1, 0)\n",
+        "\n",
+        "# Classification metrics\n",
+        "precision = precision_score(y_test_class, y_pred_class)\n",
+        "f1 = f1_score(y_test_class, y_pred_class)\n",
+        "\n",
+        "print(f\"Precision: {precision}\")\n",
+        "print(f\"F1 Score: {f1}\")\n"
+      ],
+      "metadata": {
+        "id": "jVoJD6yT5bPr",
+        "outputId": "98d07bb7-2ee7-4ef9-fce4-8b229d1e3f5b",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": 11,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "R² Score: 0.8082643791802672\n",
+            "Mean Absolute Error (MAE): 1.6497996115230407\n",
+            "Root Mean Squared Error (RMSE): 1.9241426268571293\n",
+            "Precision: 1.0\n",
+            "F1 Score: 1.0\n"
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "name": "Welcome To Colab",
+      "provenance": [],
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
